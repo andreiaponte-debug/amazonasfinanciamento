@@ -97,12 +97,8 @@
     </div>
   </div>
 
-  <div class="insights">
-    <div class="ins"><div class="h">💰 Melhor mês em retorno bruto: agosto</div><div class="t">12 outorgas geraram R$ 31,6 mil de retorno bruto — o pico da série no período, puxado pelo aumento de leads B2C qualificados.</div></div>
-    <div class="ins"><div class="h">📈 Qualificação de leads em alta</div><div class="t">% de leads B2C que avançam no estado subiu de 84% para 88% — o funil está entregando leads cada vez mais prontos para outorga.</div></div>
-    <div class="ins"><div class="h">🔓 Menos travas no processo</div><div class="t">Congelamentos caíram de 15 para 12 no período — mais processos seguem fluindo sem interrupção até a outorga.</div></div>
-    <div class="ins"><div class="h">🏬 Estoque de anúncios resiliente</div><div class="t">Mesmo com a oscilação natural de publicação/expiração de anúncios, o Live Listings se recuperou e fechou setembro em 431, patamar equivalente a junho.</div></div>
-  </div>
+  <h2>Principais insights</h2>
+  <div class="insights" id="insightsBox"></div>
 
   <div class="note">*Setembro contabiliza dados até 24/09 (mês em andamento) — comparações com meses fechados (jun/jul/ago) devem considerar essa diferença de dias.<br>Fonte: Painel Executivo Motors (Mercado Livre), CUST_ID 1451249554.</div>
 </div>
@@ -194,6 +190,53 @@ function applyHighlight(mesIdx){
   set(chCongelamentos, [makeColors('#C9CEDE',4)]);
 }
 
+function pct(a,b){ return b ? Math.round((a-b)/b*1000)/10 : 0; }
+function ins(h,t){ return `<div class="ins"><div class="h">${h}</div><div class="t">${t}</div></div>`; }
+
+function renderInsights(mes){
+  const box = document.getElementById('insightsBox');
+  let html = '';
+  if (mes === 'all'){
+    html += ins('💰 Melhor mês em retorno bruto: agosto', '12 outorgas geraram R$ 31,6 mil de retorno bruto — o pico da série no período, puxado pelo aumento de leads B2C qualificados.');
+    html += ins('📈 Qualificação de leads em alta', '% de leads B2C que avançam no estado subiu de 84% para 88% — o funil está entregando leads cada vez mais prontos para outorga.');
+    html += ins('🔓 Menos travas no processo', 'Congelamentos caíram de 15 para 12 no período — mais processos seguem fluindo sem interrupção até a outorga.');
+    html += ins('🏬 Estoque de anúncios resiliente', 'Mesmo com a oscilação natural de publicação/expiração de anúncios, o Live Listings se recuperou e fechou setembro em 431, patamar equivalente a junho.');
+  } else {
+    const i = Number(mes);
+    const nome = MONTH_FULL[i];
+    const hasPrev = i > 0;
+    const dl = hasPrev ? pct(DATA.leadsB2C[i], DATA.leadsB2C[i-1]) : null;
+    const do_ = hasPrev ? pct(DATA.outorgas[i], DATA.outorgas[i-1]) : null;
+    const dc = hasPrev ? pct(DATA.congelamentos[i], DATA.congelamentos[i-1]) : null;
+    const parcial = i === 3;
+
+    // Leads B2C
+    if (!hasPrev) {
+      html += ins('📊 Ponto de partida do período', `${nome} abriu a série com ${DATA.leadsB2C[i]} leads B2C e ${DATA.leadsEstado[i]}% avançando no estado — a base sobre a qual os meses seguintes evoluíram.`);
+    } else if (dl >= 0) {
+      html += ins('📈 Leads B2C em alta', `${nome} somou ${DATA.leadsB2C[i]} leads B2C, ${dl}% acima do mês anterior.` + (parcial ? ' Resultado parcial (até 24/09), com o mês ainda em andamento.' : ''));
+    } else {
+      html += ins('📊 Leads B2C seguem fortes', `${nome} somou ${DATA.leadsB2C[i]} leads B2C` + (parcial ? `, ritmo consistente com dados só até 24/09 — mês ainda em andamento.` : `, mantendo o funil de outorgas abastecido.`));
+    }
+
+    // Outorgas + retorno
+    html += ins('💰 Outorgas e retorno bruto', `${nome} fechou com ${DATA.outorgas[i]} outorgas e R$ ${DATA.retorno[i].toLocaleString('pt-BR')} mil de retorno bruto` + (parcial ? ' (parcial, até 24/09).' : '.'));
+
+    // Qualificação (% no estado)
+    html += ins('🎯 Qualificação do funil', `${DATA.leadsEstado[i]}% dos leads B2C de ${nome} avançaram para o estado seguinte do funil.`);
+
+    // Congelamentos
+    if (!hasPrev) {
+      html += ins('🔓 Congelamentos', `${nome} registrou ${DATA.congelamentos[i]} congelamentos — referência inicial para acompanhar a evolução do fluxo.`);
+    } else if (dc <= 0) {
+      html += ins('🔓 Menos travas no processo', `Congelamentos caíram para ${DATA.congelamentos[i]} em ${nome} (${Math.abs(dc)}% a menos que o mês anterior) — mais processos fluindo até a outorga.`);
+    } else {
+      html += ins('🔓 Congelamentos no período', `${nome} teve ${DATA.congelamentos[i]} congelamentos, de olho na liberação de fluxo para as próximas outorgas.`);
+    }
+  }
+  box.innerHTML = html;
+}
+
 function renderKPIs(mes){
   const sum = arr => arr.reduce((a,b)=>a+b,0);
   if (mes === 'all'){
@@ -208,6 +251,8 @@ function renderKPIs(mes){
     document.getElementById('kpiCongelamentos').textContent = fmtInt(sum(DATA.congelamentos));
     document.getElementById('kpiCongelamentosLbl').textContent = 'Congelamentos no período';
     applyHighlight(null);
+    renderInsights(mes);
+    return;
   } else {
     const i = Number(mes);
     document.getElementById('kpiListings').textContent = fmtInt(DATA.listingsTotal[i]);
@@ -221,6 +266,7 @@ function renderKPIs(mes){
     document.getElementById('kpiCongelamentos').textContent = fmtInt(DATA.congelamentos[i]);
     document.getElementById('kpiCongelamentosLbl').textContent = 'Congelamentos — ' + MONTHS[i];
     applyHighlight(i);
+    renderInsights(mes);
   }
 }
 
