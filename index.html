@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Amazonas Financiamentos — Painel Executivo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ml-dark:#2D3277; --ml-yellow:#FFE600; --ml-blue:#3483FA; --ml-green:#00A650;
+    --muted:#6B7280; --line:#E6E9F0; --bg:#F4F6FB; --ink:#1A1A2E;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Calibri,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:var(--ml-dark);color:#fff;padding:22px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  header .kicker{font-size:12px;font-weight:700;letter-spacing:1px;color:var(--ml-yellow);text-transform:uppercase}
+  header h1{margin:4px 0 0;font-size:24px}
+  header .sub{font-size:13px;color:#C9CEDE;margin-top:4px}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center}
+  .kpi .val{font-size:28px;font-weight:800;color:var(--ml-dark)}
+  .kpi .lbl{font-size:12.5px;font-weight:700;color:var(--ink);margin-top:4px}
+  .kpi .delta{font-size:11.5px;color:var(--muted);margin-top:2px}
+  h2{font-size:18px;color:var(--ml-dark);margin:30px 0 12px;border-left:4px solid var(--ml-blue);padding-left:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .cap{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .insights{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:10px}
+  .ins{background:#fff;border:1px solid var(--line);border-left:4px solid var(--ml-green);border-radius:10px;padding:14px 16px}
+  .ins .h{font-weight:700;font-size:13.5px;margin-bottom:4px;color:var(--ml-dark)}
+  .ins .t{font-size:12.5px;color:#333;line-height:1.5}
+  .note{font-size:11.5px;color:var(--muted);margin-top:18px}
+  canvas{max-height:280px}
+  footer{text-align:center;font-size:11.5px;color:var(--muted);padding:20px}
+  @media(max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="kicker">Grupo Amazonas · Painel Executivo Motors</div>
+    <h1>Amazonas Financiamentos</h1>
+    <div class="sub">Live Listings · Leads B2C · Congelamentos e Outorgas — Junho a Setembro de 2026 (Set: dados até 24/09)</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="kpis">
+    <div class="kpi"><div class="val">431</div><div class="lbl">Live Listings (Set*)</div><div class="delta">anúncios ativos no ar</div></div>
+    <div class="kpi"><div class="val">1.786</div><div class="lbl">Leads B2C no período</div><div class="delta">soma jun–set</div></div>
+    <div class="kpi"><div class="val">43</div><div class="lbl">Outorgas no período</div><div class="delta">financiamentos aprovados</div></div>
+    <div class="kpi"><div class="val">55</div><div class="lbl">Congelamentos no período</div><div class="delta">processos pausados</div></div>
+  </div>
+
+  <h2>Live Listings</h2>
+  <div class="panel">
+    <canvas id="chListings"></canvas>
+    <div class="cap">Estoque anunciado se manteve estável no período, com recuperação em agosto e setembro após a retração de julho — mostrando capacidade de repor o funil de anúncios rapidamente.</div>
+  </div>
+
+  <h2>Leads B2C</h2>
+  <div class="grid2">
+    <div class="panel">
+      <canvas id="chLeadsB2C"></canvas>
+      <div class="cap">Leads B2C cresceram de 356 (jun) para um patamar acima de 460–480 a partir de julho — mais que o dobro do volume inicial.</div>
+    </div>
+    <div class="panel">
+      <canvas id="chLeadsEstado"></canvas>
+      <div class="cap">A fatia de leads B2C que avança para o estado seguinte do funil vem subindo mês a mês, de 84% em junho para 88% em agosto e setembro — sinal de leads cada vez mais qualificados.</div>
+    </div>
+  </div>
+
+  <h2>Congelamentos e Outorgas</h2>
+  <div class="grid2">
+    <div class="panel">
+      <canvas id="chOutorgas"></canvas>
+      <div class="cap">12 outorgas em agosto foi o melhor mês do período, com retorno bruto de R$ 31,6 mil — o maior da série.</div>
+    </div>
+    <div class="panel">
+      <canvas id="chCongelamentos"></canvas>
+      <div class="cap">Congelamentos vêm em trajetória de queda (15 → 12), liberando mais fluxo de processos para conversão em outorga.</div>
+    </div>
+  </div>
+
+  <div class="insights">
+    <div class="ins"><div class="h">💰 Melhor mês em retorno bruto: agosto</div><div class="t">12 outorgas geraram R$ 31,6 mil de retorno bruto — o pico da série no período, puxado pelo aumento de leads B2C qualificados.</div></div>
+    <div class="ins"><div class="h">📈 Qualificação de leads em alta</div><div class="t">% de leads B2C que avançam no estado subiu de 84% para 88% — o funil está entregando leads cada vez mais prontos para outorga.</div></div>
+    <div class="ins"><div class="h">🔓 Menos travas no processo</div><div class="t">Congelamentos caíram de 15 para 12 no período — mais processos seguem fluindo sem interrupção até a outorga.</div></div>
+    <div class="ins"><div class="h">🏬 Estoque de anúncios resiliente</div><div class="t">Mesmo com a oscilação natural de publicação/expiração de anúncios, o Live Listings se recuperou e fechou setembro em 431, patamar equivalente a junho.</div></div>
+  </div>
+
+  <div class="note">*Setembro contabiliza dados até 24/09 (mês em andamento) — comparações com meses fechados (jun/jul/ago) devem considerar essa diferença de dias.<br>Fonte: Painel Executivo Motors (Mercado Livre), CUST_ID 1451249554.</div>
+</div>
+
+<footer>Grupo Amazonas × Mercado Livre — Painel Amazonas Financiamentos</footer>
+
+<script>
+const MONTHS = ['Jun','Jul','Ago','Set*'];
+const NAVY='#2D3277', BLUE='#3483FA', GREEN='#00A650', YELLOW='#FFE600', GRAY='#6B7280', LINEC='#E6E9F0';
+Chart.defaults.font.family = 'Calibri, Arial, sans-serif';
+
+new Chart(document.getElementById('chListings'), {
+  data: {
+    labels: MONTHS,
+    datasets: [
+      {type:'bar', label:'Total', data:[433,381,406,431], backgroundColor: YELLOW, borderRadius:5},
+      {type:'bar', label:'AYC', data:[433,381,406,431], backgroundColor: BLUE, borderRadius:5},
+      {type:'bar', label:'B2C', data:[413,364,355,385], backgroundColor: GREEN, borderRadius:5},
+    ]
+  },
+  options: {responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true, grid:{color:LINEC}}}}
+});
+
+new Chart(document.getElementById('chLeadsB2C'), {
+  data: {
+    labels: MONTHS,
+    datasets: [
+      {type:'bar', label:'Leads B2C', data:[356,486,463,481], backgroundColor: BLUE, borderRadius:6, yAxisID:'y'},
+    ]
+  },
+  options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, grid:{color:LINEC}}}}
+});
+
+new Chart(document.getElementById('chLeadsEstado'), {
+  data: {
+    labels: MONTHS,
+    datasets: [
+      {type:'line', label:'% Leads no Estado', data:[84,86,88,88], borderColor: GREEN, backgroundColor: GREEN, tension:.3, pointRadius:5}
+    ]
+  },
+  options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{min:0, max:100, ticks:{callback:v=>v+'%'}, grid:{color:LINEC}}}}
+});
+
+new Chart(document.getElementById('chOutorgas'), {
+  data: {
+    labels: MONTHS,
+    datasets: [
+      {type:'bar', label:'Outorgas', data:[11,11,12,9], backgroundColor: NAVY, borderRadius:6, yAxisID:'y'},
+      {type:'line', label:'Retorno bruto (R$ mil)', data:[24.6,25.9,31.6,20.6], borderColor: YELLOW, backgroundColor: YELLOW, borderWidth:3, pointRadius:5, yAxisID:'y1'}
+    ]
+  },
+  options: {responsive:true, plugins:{legend:{position:'bottom'}},
+    scales:{
+      y:{beginAtZero:true, position:'left', grid:{color:LINEC}, title:{display:true,text:'Outorgas'}},
+      y1:{beginAtZero:true, position:'right', grid:{display:false}, title:{display:true,text:'R$ mil'}}
+    }}
+});
+
+new Chart(document.getElementById('chCongelamentos'), {
+  data: {
+    labels: MONTHS,
+    datasets: [
+      {type:'bar', label:'Congelamentos', data:[15,13,15,12], backgroundColor: '#C9CEDE', borderRadius:6}
+    ]
+  },
+  options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, grid:{color:LINEC}}}}
+});
+</script>
+</body>
+</html>
