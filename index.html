@@ -33,6 +33,9 @@
   canvas{max-height:280px}
   footer{text-align:center;font-size:11.5px;color:var(--muted);padding:20px}
   @media(max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+  .filterbar{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .filterbar label{font-size:13px;font-weight:700;color:var(--muted)}
+  .filterbar select{padding:8px 14px;border-radius:20px;border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ml-dark);background:#fff}
 </style>
 </head>
 <body>
@@ -46,11 +49,22 @@
 
 <div class="wrap">
 
-  <div class="kpis">
-    <div class="kpi"><div class="val">431</div><div class="lbl">Live Listings (Set*)</div><div class="delta">anúncios ativos no ar</div></div>
-    <div class="kpi"><div class="val">1.786</div><div class="lbl">Leads B2C no período</div><div class="delta">soma jun–set</div></div>
-    <div class="kpi"><div class="val">43</div><div class="lbl">Outorgas no período</div><div class="delta">financiamentos aprovados</div></div>
-    <div class="kpi"><div class="val">55</div><div class="lbl">Congelamentos no período</div><div class="delta">processos pausados</div></div>
+  <div class="filterbar">
+    <label for="mesFilter">Período:</label>
+    <select id="mesFilter">
+      <option value="all">Completo (Jun–Set)</option>
+      <option value="0">Junho</option>
+      <option value="1">Julho</option>
+      <option value="2">Agosto</option>
+      <option value="3">Setembro (até 24/09)</option>
+    </select>
+  </div>
+
+  <div class="kpis" id="kpiRow">
+    <div class="kpi"><div class="val" id="kpiListings">431</div><div class="lbl" id="kpiListingsLbl">Live Listings (Set*)</div><div class="delta">anúncios ativos no ar</div></div>
+    <div class="kpi"><div class="val" id="kpiLeads">1.786</div><div class="lbl" id="kpiLeadsLbl">Leads B2C no período</div><div class="delta" id="kpiLeadsDelta">soma jun–set</div></div>
+    <div class="kpi"><div class="val" id="kpiOutorgas">43</div><div class="lbl" id="kpiOutorgasLbl">Outorgas no período</div><div class="delta" id="kpiOutorgasDelta">financiamentos aprovados</div></div>
+    <div class="kpi"><div class="val" id="kpiCongelamentos">55</div><div class="lbl" id="kpiCongelamentosLbl">Congelamentos no período</div><div class="delta">processos pausados</div></div>
   </div>
 
   <h2>Live Listings</h2>
@@ -97,49 +111,59 @@
 
 <script>
 const MONTHS = ['Jun','Jul','Ago','Set*'];
+const MONTH_FULL = ['Junho','Julho','Agosto','Setembro (até 24/09)'];
 const NAVY='#2D3277', BLUE='#3483FA', GREEN='#00A650', YELLOW='#FFE600', GRAY='#6B7280', LINEC='#E6E9F0';
 Chart.defaults.font.family = 'Calibri, Arial, sans-serif';
 
-new Chart(document.getElementById('chListings'), {
-  data: {
-    labels: MONTHS,
-    datasets: [
-      {type:'bar', label:'Total', data:[433,381,406,431], backgroundColor: YELLOW, borderRadius:5},
-      {type:'bar', label:'AYC', data:[433,381,406,431], backgroundColor: BLUE, borderRadius:5},
-      {type:'bar', label:'B2C', data:[413,364,355,385], backgroundColor: GREEN, borderRadius:5},
-    ]
-  },
+const DATA = {
+  listingsTotal: [433,381,406,431],
+  listingsAYC:   [433,381,406,431],
+  listingsB2C:   [413,364,355,385],
+  leadsB2C:      [356,486,463,481],
+  leadsEstado:   [84,86,88,88],
+  outorgas:      [11,11,12,9],
+  retorno:       [24.6,25.9,31.6,20.6],
+  congelamentos: [15,13,15,12],
+};
+
+function fmtInt(n){ return n.toLocaleString('pt-BR'); }
+
+function fade(colors, selIdx){
+  // full opacity on selected month, faded on the rest; no fade when 'all' (selIdx===null)
+  if (selIdx === null) return colors;
+  return colors.map((c,i) => i===selIdx ? c : c+'55');
+}
+
+function makeColors(base, n){ return Array.from({length:n}, () => base); }
+
+const chListings = new Chart(document.getElementById('chListings'), {
+  data: { labels: MONTHS, datasets: [
+    {type:'bar', label:'Total', data:DATA.listingsTotal, backgroundColor: makeColors(YELLOW,4), borderRadius:5},
+    {type:'bar', label:'AYC', data:DATA.listingsAYC, backgroundColor: makeColors(BLUE,4), borderRadius:5},
+    {type:'bar', label:'B2C', data:DATA.listingsB2C, backgroundColor: makeColors(GREEN,4), borderRadius:5},
+  ]},
   options: {responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true, grid:{color:LINEC}}}}
 });
 
-new Chart(document.getElementById('chLeadsB2C'), {
-  data: {
-    labels: MONTHS,
-    datasets: [
-      {type:'bar', label:'Leads B2C', data:[356,486,463,481], backgroundColor: BLUE, borderRadius:6, yAxisID:'y'},
-    ]
-  },
+const chLeadsB2C = new Chart(document.getElementById('chLeadsB2C'), {
+  data: { labels: MONTHS, datasets: [
+    {type:'bar', label:'Leads B2C', data:DATA.leadsB2C, backgroundColor: makeColors(BLUE,4), borderRadius:6, yAxisID:'y'},
+  ]},
   options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, grid:{color:LINEC}}}}
 });
 
-new Chart(document.getElementById('chLeadsEstado'), {
-  data: {
-    labels: MONTHS,
-    datasets: [
-      {type:'line', label:'% Leads no Estado', data:[84,86,88,88], borderColor: GREEN, backgroundColor: GREEN, tension:.3, pointRadius:5}
-    ]
-  },
+const chLeadsEstado = new Chart(document.getElementById('chLeadsEstado'), {
+  data: { labels: MONTHS, datasets: [
+    {type:'line', label:'% Leads no Estado', data:DATA.leadsEstado, borderColor: GREEN, backgroundColor: GREEN, tension:.3, pointRadius:5, pointBackgroundColor: makeColors(GREEN,4)}
+  ]},
   options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{min:0, max:100, ticks:{callback:v=>v+'%'}, grid:{color:LINEC}}}}
 });
 
-new Chart(document.getElementById('chOutorgas'), {
-  data: {
-    labels: MONTHS,
-    datasets: [
-      {type:'bar', label:'Outorgas', data:[11,11,12,9], backgroundColor: NAVY, borderRadius:6, yAxisID:'y'},
-      {type:'line', label:'Retorno bruto (R$ mil)', data:[24.6,25.9,31.6,20.6], borderColor: YELLOW, backgroundColor: YELLOW, borderWidth:3, pointRadius:5, yAxisID:'y1'}
-    ]
-  },
+const chOutorgas = new Chart(document.getElementById('chOutorgas'), {
+  data: { labels: MONTHS, datasets: [
+    {type:'bar', label:'Outorgas', data:DATA.outorgas, backgroundColor: makeColors(NAVY,4), borderRadius:6, yAxisID:'y'},
+    {type:'line', label:'Retorno bruto (R$ mil)', data:DATA.retorno, borderColor: YELLOW, backgroundColor: YELLOW, borderWidth:3, pointRadius:5, pointBackgroundColor: makeColors(YELLOW,4), yAxisID:'y1'}
+  ]},
   options: {responsive:true, plugins:{legend:{position:'bottom'}},
     scales:{
       y:{beginAtZero:true, position:'left', grid:{color:LINEC}, title:{display:true,text:'Outorgas'}},
@@ -147,15 +171,61 @@ new Chart(document.getElementById('chOutorgas'), {
     }}
 });
 
-new Chart(document.getElementById('chCongelamentos'), {
-  data: {
-    labels: MONTHS,
-    datasets: [
-      {type:'bar', label:'Congelamentos', data:[15,13,15,12], backgroundColor: '#C9CEDE', borderRadius:6}
-    ]
-  },
+const chCongelamentos = new Chart(document.getElementById('chCongelamentos'), {
+  data: { labels: MONTHS, datasets: [
+    {type:'bar', label:'Congelamentos', data:DATA.congelamentos, backgroundColor: makeColors('#C9CEDE',4), borderRadius:6}
+  ]},
   options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, grid:{color:LINEC}}}}
 });
+
+function applyHighlight(mesIdx){
+  const set = (chart, baseColors) => {
+    chart.data.datasets.forEach((ds, di) => {
+      const base = Array.isArray(baseColors[di]) ? baseColors[di] : baseColors[di];
+      if (ds.type === 'bar') ds.backgroundColor = fade(base, mesIdx);
+      if (ds.type === 'line' && ds.pointBackgroundColor) ds.pointBackgroundColor = fade(base, mesIdx);
+    });
+    chart.update();
+  };
+  set(chListings, [makeColors(YELLOW,4), makeColors(BLUE,4), makeColors(GREEN,4)]);
+  set(chLeadsB2C, [makeColors(BLUE,4)]);
+  set(chLeadsEstado, [makeColors(GREEN,4)]);
+  set(chOutorgas, [makeColors(NAVY,4), makeColors(YELLOW,4)]);
+  set(chCongelamentos, [makeColors('#C9CEDE',4)]);
+}
+
+function renderKPIs(mes){
+  const sum = arr => arr.reduce((a,b)=>a+b,0);
+  if (mes === 'all'){
+    document.getElementById('kpiListings').textContent = fmtInt(DATA.listingsTotal[3]);
+    document.getElementById('kpiListingsLbl').textContent = 'Live Listings (Set*)';
+    document.getElementById('kpiLeads').textContent = fmtInt(sum(DATA.leadsB2C));
+    document.getElementById('kpiLeadsLbl').textContent = 'Leads B2C no período';
+    document.getElementById('kpiLeadsDelta').textContent = 'soma jun–set';
+    document.getElementById('kpiOutorgas').textContent = fmtInt(sum(DATA.outorgas));
+    document.getElementById('kpiOutorgasLbl').textContent = 'Outorgas no período';
+    document.getElementById('kpiOutorgasDelta').textContent = 'financiamentos aprovados';
+    document.getElementById('kpiCongelamentos').textContent = fmtInt(sum(DATA.congelamentos));
+    document.getElementById('kpiCongelamentosLbl').textContent = 'Congelamentos no período';
+    applyHighlight(null);
+  } else {
+    const i = Number(mes);
+    document.getElementById('kpiListings').textContent = fmtInt(DATA.listingsTotal[i]);
+    document.getElementById('kpiListingsLbl').textContent = 'Live Listings — ' + MONTHS[i];
+    document.getElementById('kpiLeads').textContent = fmtInt(DATA.leadsB2C[i]);
+    document.getElementById('kpiLeadsLbl').textContent = 'Leads B2C — ' + MONTHS[i];
+    document.getElementById('kpiLeadsDelta').textContent = DATA.leadsEstado[i] + '% avançam no estado';
+    document.getElementById('kpiOutorgas').textContent = fmtInt(DATA.outorgas[i]);
+    document.getElementById('kpiOutorgasLbl').textContent = 'Outorgas — ' + MONTHS[i];
+    document.getElementById('kpiOutorgasDelta').textContent = 'retorno bruto R$ ' + DATA.retorno[i].toLocaleString('pt-BR') + ' mil';
+    document.getElementById('kpiCongelamentos').textContent = fmtInt(DATA.congelamentos[i]);
+    document.getElementById('kpiCongelamentosLbl').textContent = 'Congelamentos — ' + MONTHS[i];
+    applyHighlight(i);
+  }
+}
+
+document.getElementById('mesFilter').addEventListener('change', e => renderKPIs(e.target.value));
+renderKPIs('all');
 </script>
 </body>
 </html>
