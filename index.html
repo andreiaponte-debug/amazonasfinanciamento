@@ -16,7 +16,7 @@
   header h1{margin:4px 0 0;font-size:24px}
   header .sub{font-size:13px;color:#C9CEDE;margin-top:4px}
   .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:26px}
   .kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center}
   .kpi .val{font-size:28px;font-weight:800;color:var(--ml-dark)}
   .kpi .lbl{font-size:12.5px;font-weight:700;color:var(--ink);margin-top:4px}
@@ -65,6 +65,7 @@
     <div class="kpi"><div class="val" id="kpiLeads">1.786</div><div class="lbl" id="kpiLeadsLbl">Leads B2C no período</div><div class="delta" id="kpiLeadsDelta">soma jun–set</div></div>
     <div class="kpi"><div class="val" id="kpiOutorgas">43</div><div class="lbl" id="kpiOutorgasLbl">Outorgas no período</div><div class="delta" id="kpiOutorgasDelta">financiamentos aprovados</div></div>
     <div class="kpi"><div class="val" id="kpiCongelamentos">55</div><div class="lbl" id="kpiCongelamentosLbl">Congelamentos no período</div><div class="delta">processos pausados</div></div>
+    <div class="kpi"><div class="val" id="kpiConversao">2,41%</div><div class="lbl" id="kpiConversaoLbl">Conversão B2C no período</div><div class="delta" id="kpiConversaoDelta">outorgas ÷ leads B2C</div></div>
   </div>
 
   <h2>Live Listings</h2>
@@ -83,6 +84,12 @@
       <canvas id="chLeadsEstado"></canvas>
       <div class="cap">A fatia de leads B2C que avança para o estado seguinte do funil vem subindo mês a mês, de 84% em junho para 88% em agosto e setembro — sinal de leads cada vez mais qualificados.</div>
     </div>
+  </div>
+
+  <h2>Conversão B2C</h2>
+  <div class="panel">
+    <canvas id="chConversao"></canvas>
+    <div class="cap">Conversão = outorgas ÷ leads B2C do mês. A leitura de setembro é parcial (dados até 24/09) — o mês ainda não fechou o ciclo completo de outorgas.</div>
   </div>
 
   <h2>Congelamentos e Outorgas</h2>
@@ -120,6 +127,7 @@ const DATA = {
   outorgas:      [11,11,12,9],
   retorno:       [24.6,25.9,31.6,20.6],
   congelamentos: [15,13,15,12],
+  conversao:     [3.09,2.26,2.59,1.87],
 };
 
 function fmtInt(n){ return n.toLocaleString('pt-BR'); }
@@ -155,6 +163,13 @@ const chLeadsEstado = new Chart(document.getElementById('chLeadsEstado'), {
   options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{min:0, max:100, ticks:{callback:v=>v+'%'}, grid:{color:LINEC}}}}
 });
 
+const chConversao = new Chart(document.getElementById('chConversao'), {
+  data: { labels: MONTHS, datasets: [
+    {type:'line', label:'Conversão B2C', data:DATA.conversao, borderColor: BLUE, backgroundColor: BLUE, tension:.3, pointRadius:5, pointBackgroundColor: makeColors(BLUE,4)}
+  ]},
+  options: {responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{callback:v=>v+'%'}, grid:{color:LINEC}}}}
+});
+
 const chOutorgas = new Chart(document.getElementById('chOutorgas'), {
   data: { labels: MONTHS, datasets: [
     {type:'bar', label:'Outorgas', data:DATA.outorgas, backgroundColor: makeColors(NAVY,4), borderRadius:6, yAxisID:'y'},
@@ -186,6 +201,7 @@ function applyHighlight(mesIdx){
   set(chListings, [makeColors(YELLOW,4), makeColors(BLUE,4), makeColors(GREEN,4)]);
   set(chLeadsB2C, [makeColors(BLUE,4)]);
   set(chLeadsEstado, [makeColors(GREEN,4)]);
+  set(chConversao, [makeColors(BLUE,4)]);
   set(chOutorgas, [makeColors(NAVY,4), makeColors(YELLOW,4)]);
   set(chCongelamentos, [makeColors('#C9CEDE',4)]);
 }
@@ -201,6 +217,7 @@ function renderInsights(mes){
     html += ins('📈 Qualificação de leads em alta', '% de leads B2C que avançam no estado subiu de 84% para 88% — o funil está entregando leads cada vez mais prontos para outorga.');
     html += ins('🔓 Menos travas no processo', 'Congelamentos caíram de 15 para 12 no período — mais processos seguem fluindo sem interrupção até a outorga.');
     html += ins('🏬 Estoque de anúncios resiliente', 'Mesmo com a oscilação natural de publicação/expiração de anúncios, o Live Listings se recuperou e fechou setembro em 431, patamar equivalente a junho.');
+    html += ins('🎯 Conversão B2C', 'A conversão média do período (outorgas ÷ leads B2C) foi de 2,41%, com pico de 3,09% em junho — setembro aparece mais baixo (1,87%) porque o mês ainda está parcial (dados até 24/09), com outorgas do período ainda em fechamento.');
   } else {
     const i = Number(mes);
     const nome = MONTH_FULL[i];
@@ -233,6 +250,13 @@ function renderInsights(mes){
     } else {
       html += ins('🔓 Congelamentos no período', `${nome} teve ${DATA.congelamentos[i]} congelamentos, de olho na liberação de fluxo para as próximas outorgas.`);
     }
+
+    // Conversão B2C
+    if (parcial) {
+      html += ins('🎯 Conversão B2C (parcial)', `${nome} está em ${DATA.conversao[i]}% até 24/09 — número ainda deve subir conforme mais outorgas do mês forem fechadas.`);
+    } else {
+      html += ins('🎯 Conversão B2C', `${nome} converteu ${DATA.conversao[i]}% dos leads B2C em outorga.`);
+    }
   }
   box.innerHTML = html;
 }
@@ -250,6 +274,8 @@ function renderKPIs(mes){
     document.getElementById('kpiOutorgasDelta').textContent = 'financiamentos aprovados';
     document.getElementById('kpiCongelamentos').textContent = fmtInt(sum(DATA.congelamentos));
     document.getElementById('kpiCongelamentosLbl').textContent = 'Congelamentos no período';
+    document.getElementById('kpiConversao').textContent = (sum(DATA.outorgas)/sum(DATA.leadsB2C)*100).toFixed(2).replace('.',',') + '%';
+    document.getElementById('kpiConversaoLbl').textContent = 'Conversão B2C no período';
     applyHighlight(null);
     renderInsights(mes);
     return;
@@ -265,6 +291,8 @@ function renderKPIs(mes){
     document.getElementById('kpiOutorgasDelta').textContent = 'retorno bruto R$ ' + DATA.retorno[i].toLocaleString('pt-BR') + ' mil';
     document.getElementById('kpiCongelamentos').textContent = fmtInt(DATA.congelamentos[i]);
     document.getElementById('kpiCongelamentosLbl').textContent = 'Congelamentos — ' + MONTHS[i];
+    document.getElementById('kpiConversao').textContent = DATA.conversao[i].toLocaleString('pt-BR') + '%';
+    document.getElementById('kpiConversaoLbl').textContent = 'Conversão B2C — ' + MONTHS[i];
     applyHighlight(i);
     renderInsights(mes);
   }
